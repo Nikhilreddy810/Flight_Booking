@@ -3,6 +3,7 @@ package com.example.flight.entity;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "flight")
 public class Flight {
 
     @Id
@@ -18,34 +19,60 @@ public class Flight {
 
     public Flight() {}
 
-    public Flight(String flightNumber, String airline, String source, String destination, int totalSeats, double price) {
-        this.flightNumber = flightNumber;
-        this.airline = airline;
-        this.source = source;
-        this.destination = destination;
-        this.totalSeats = totalSeats;
-        this.price = price;
+    // Getters and Setters
+    public Long getId() {
+        return id;
     }
 
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getFlightNumber() { return flightNumber; }
-    public void setFlightNumber(String flightNumber) { this.flightNumber = flightNumber; }
+    public String getFlightNumber() {
+        return flightNumber;
+    }
 
-    public String getAirline() { return airline; }
-    public void setAirline(String airline) { this.airline = airline; }
+    public void setFlightNumber(String flightNumber) {
+        this.flightNumber = flightNumber;
+    }
 
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
+    public String getAirline() {
+        return airline;
+    }
 
-    public String getDestination() { return destination; }
-    public void setDestination(String destination) { this.destination = destination; }
+    public void setAirline(String airline) {
+        this.airline = airline;
+    }
 
-    public int getTotalSeats() { return totalSeats; }
-    public void setTotalSeats(int totalSeats) { this.totalSeats = totalSeats; }
+    public String getSource() {
+        return source;
+    }
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
+    public int getTotalSeats() {
+        return totalSeats;
+    }
+
+    public void setTotalSeats(int totalSeats) {
+        this.totalSeats = totalSeats;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
 }

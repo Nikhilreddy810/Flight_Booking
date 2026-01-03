@@ -1,7 +1,7 @@
 package com.example.flight.controller;
 
 import com.example.flight.entity.Booking;
-import com.example.flight.repository.BookingRepository;
+import com.example.flight.service.BookingService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,50 +9,29 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static org.springframework.http.ResponseEntity.*; // ✅ required for noContent() and notFound()
-
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
 
     @Autowired
-    private BookingRepository bookingRepository;
+    private BookingService bookingService;
 
+    // GET ALL BOOKINGS
     @GetMapping
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+        return bookingService.getAllBookings();
     }
 
+    // CREATE BOOKING
     @PostMapping
     public Booking createBooking(@RequestBody Booking booking) {
-        return bookingRepository.save(booking);
+        return bookingService.createBooking(booking);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Booking> getBookingById(@PathVariable Long id) {
-        return bookingRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> notFound().build());
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Booking> updateBooking(@PathVariable Long id, @RequestBody Booking updatedBooking) {
-        return bookingRepository.findById(id)
-                .map(existingBooking -> {
-                    updatedBooking.setId(id); // ✅ use `setId` not `setBookingId`
-                    Booking savedBooking = bookingRepository.save(updatedBooking);
-                    return ok(savedBooking);
-                })
-                .orElseGet(() -> notFound().build());
-    }
-
+    // CANCEL BOOKING
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteBooking(@PathVariable Long id) {
-        return bookingRepository.findById(id)
-                .map(booking -> {
-                    bookingRepository.deleteById(id);
-                    return noContent().build(); // ✅ works now due to static import
-                })
-                .orElseGet(() -> notFound().build());
+    public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
+        bookingService.cancelBooking(id);
+        return ResponseEntity.ok("Booking cancelled successfully");
     }
 }
