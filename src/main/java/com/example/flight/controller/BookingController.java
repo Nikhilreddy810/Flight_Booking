@@ -1,5 +1,6 @@
 package com.example.flight.controller;
 
+import com.example.flight.dto.BookingRequest;
 import com.example.flight.entity.Booking;
 import com.example.flight.service.BookingService;
 
@@ -16,19 +17,16 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    // GET ALL BOOKINGS
     @GetMapping
     public List<Booking> getAllBookings() {
         return bookingService.getAllBookings();
     }
 
-    // CREATE BOOKING
     @PostMapping
-    public Booking createBooking(@RequestBody Booking booking) {
-        return bookingService.createBooking(booking);
+    public Booking createBooking(@RequestBody BookingRequest request) {
+        return bookingService.createBooking(request);
     }
 
-    // CANCEL BOOKING
     @DeleteMapping("/{id}")
     public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
         bookingService.cancelBooking(id);

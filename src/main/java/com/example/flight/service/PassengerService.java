@@ -25,4 +25,8 @@ public class PassengerService {
         updatedPassenger.setId(id);
         return passengerRepository.save(updatedPassenger);
     }
+    
+    public void deletePassenger(Long id) {
+        passengerRepository.deleteById(id);
+    }
 }
