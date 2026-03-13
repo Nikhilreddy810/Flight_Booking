@@ -2,6 +2,9 @@ package com.example.flight.controller;
 
 import com.example.flight.entity.Passenger;
 import com.example.flight.service.PassengerService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +18,7 @@ public class PassengerController {
     private PassengerService passengerService;
 
     @PostMapping
-    public Passenger createPassenger(@RequestBody Passenger passenger) {
+    public Passenger createPassenger(@Valid @RequestBody Passenger passenger) {
         return passengerService.savePassenger(passenger);
     }
 
@@ -25,7 +28,7 @@ public class PassengerController {
     }
 
     @PutMapping("/{id}")
-    public Passenger updatePassenger(@PathVariable Long id, @RequestBody Passenger passenger) {
+    public Passenger updatePassenger(@PathVariable Long id, @Valid @RequestBody Passenger passenger) {
         return passengerService.updatePassenger(id, passenger);
     }
 

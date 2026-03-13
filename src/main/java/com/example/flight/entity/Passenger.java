@@ -1,6 +1,7 @@
 package com.example.flight.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 
 @Entity
 @Table(name = "passenger")
@@ -10,14 +11,21 @@ public class Passenger {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Name cannot be empty")
     private String name;
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email cannot be empty")
     private String email;
+
+    @Min(value = 1, message = "Age must be greater than 0")
     private int age;
+
+    @NotBlank(message = "Contact cannot be empty")
     private String contact;
 
     public Passenger() {}
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
