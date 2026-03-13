@@ -2,6 +2,7 @@ package com.example.flight.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -15,13 +16,18 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
 
-                // Public APIs
+                // swagger endpoints
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // public flights
                 .requestMatchers("/api/flights/**").permitAll()
 
-                // All other APIs require authentication
+                // everything else secured
                 .anyRequest().authenticated()
             )
-            .httpBasic();
+            .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
