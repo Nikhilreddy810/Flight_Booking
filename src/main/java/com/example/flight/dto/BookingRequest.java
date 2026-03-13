@@ -1,8 +1,13 @@
 package com.example.flight.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public class BookingRequest {
 
+    @NotNull(message = "Flight ID is required")
     private Long flightId;
+
+    @NotNull(message = "Passenger ID is required")
     private Long passengerId;
 
     public Long getFlightId() {

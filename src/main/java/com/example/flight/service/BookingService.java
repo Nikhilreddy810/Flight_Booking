@@ -12,6 +12,7 @@ import com.example.flight.repository.PassengerRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +33,7 @@ public class BookingService {
         return bookingRepository.findAll();
     }
 
+    @Transactional
     public Booking createBooking(BookingRequest request) {
 
         Flight flight = flightRepository.findById(request.getFlightId())
@@ -55,7 +57,16 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    @Transactional
     public void cancelBooking(Long id) {
+
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
+
+        Flight flight = booking.getFlight();
+        flight.setTotalSeats(flight.getTotalSeats() + 1);
+        flightRepository.save(flight);
+
         bookingRepository.deleteById(id);
     }
 }

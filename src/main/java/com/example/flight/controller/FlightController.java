@@ -1,7 +1,7 @@
 package com.example.flight.controller;
 
 import com.example.flight.entity.Flight;
-import com.example.flight.repository.FlightRepository;
+import com.example.flight.service.FlightService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,42 +16,42 @@ import static org.springframework.http.ResponseEntity.*;
 public class FlightController {
 
     @Autowired
-    private FlightRepository flightRepository;
+    private FlightService flightService;
 
     @GetMapping
     public List<Flight> getAllFlights() {
-        return flightRepository.findAll();
+        return flightService.getAllFlights();
     }
 
     @PostMapping
     public Flight addFlight(@RequestBody Flight flight) {
-        return flightRepository.save(flight);
+        return flightService.addFlight(flight);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Flight> getFlightById(@PathVariable Long id) {
-        return flightRepository.findById(id)
+        return flightService.getFlightById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Flight> updateFlight(@PathVariable Long id, @RequestBody Flight updatedFlight) {
-        return flightRepository.findById(id)
+    public ResponseEntity<Flight> updateFlight(@PathVariable Long id,
+                                               @RequestBody Flight updatedFlight) {
+        return flightService.getFlightById(id)
                 .map(existing -> {
-                    updatedFlight.setId(id);
-                    Flight saved = flightRepository.save(updatedFlight);
+                    Flight saved = flightService.updateFlight(id, updatedFlight);
                     return ok(saved);
                 })
                 .orElseGet(() -> notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteFlight(@PathVariable Long id) {
-        return flightRepository.findById(id)
+    public ResponseEntity<?> deleteFlight(@PathVariable Long id) {
+        return flightService.getFlightById(id)
                 .map(flight -> {
-                    flightRepository.deleteById(id);
-                    return noContent().build();
+                    flightService.deleteFlight(id);
+                    return ResponseEntity.noContent().build();
                 })
                 .orElseGet(() -> notFound().build());
     }
