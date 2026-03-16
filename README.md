@@ -36,3 +36,8 @@ Login at `/auth/login` → copy token → add to protected requests:
 - Automatic seat restoration on booking cancellation
 - Global exception handling with meaningful error messages
 - Input validation on all request bodies
+
+## API Documentation
+Run the application and visit:
+http://localhost:8080/swagger-ui.html
+  
