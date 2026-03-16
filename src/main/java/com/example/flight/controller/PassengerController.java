@@ -3,6 +3,7 @@ package com.example.flight.controller;
 import com.example.flight.entity.Passenger;
 import com.example.flight.service.PassengerService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/passengers")
+@SecurityRequirement(name = "bearerAuth")
 public class PassengerController {
 
     @Autowired
@@ -28,7 +30,8 @@ public class PassengerController {
     }
 
     @PutMapping("/{id}")
-    public Passenger updatePassenger(@PathVariable Long id, @Valid @RequestBody Passenger passenger) {
+    public Passenger updatePassenger(@PathVariable Long id,
+                                     @Valid @RequestBody Passenger passenger) {
         return passengerService.updatePassenger(id, passenger);
     }
 
