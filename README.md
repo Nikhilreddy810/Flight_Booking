@@ -40,4 +40,14 @@ Login at `/auth/login` → copy token → add to protected requests:
 ## API Documentation
 Run the application and visit:
 http://localhost:8080/swagger-ui.html
-  
+
+## 🧪 Testing
+- 6 JUnit tests written for BookingService
+- Covers booking creation, cancellation, seat management and exception handling
+- Run tests: `mvn test`
+
+## 📊 Project Stats
+- 14 REST API endpoints
+- 4 database tables
+- 6 JUnit tests — all passing
+- JWT secured APIs
