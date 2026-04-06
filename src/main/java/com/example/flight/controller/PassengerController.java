@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,13 +21,17 @@ public class PassengerController {
     private PassengerService passengerService;
 
     @PostMapping
-    public Passenger createPassenger(@Valid @RequestBody Passenger passenger) {
-        return passengerService.savePassenger(passenger);
+    public Passenger createPassenger(@Valid @RequestBody Passenger passenger,
+                                     Authentication authentication) {
+        String username = authentication.getName();
+        return passengerService.savePassenger(passenger, username);
     }
 
     @GetMapping
-    public List<Passenger> getAllPassengers() {
-        return passengerService.getAllPassengers();
+    public List<Passenger> getAllPassengers(Authentication authentication) {
+        String username = authentication.getName();
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
+        return passengerService.getAllPassengers(username, role);
     }
 
     @PutMapping("/{id}")

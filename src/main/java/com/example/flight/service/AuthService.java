@@ -20,13 +20,14 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public String register(String username, String password) {
+    public String register(String username, String password, String role) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role != null ? role : "ROLE_USER");
         userRepository.save(user);
         return "User registered successfully";
     }
@@ -39,6 +40,6 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        return jwtUtil.generateToken(username);
+        return jwtUtil.generateToken(username, user.getRole());
     }
 }

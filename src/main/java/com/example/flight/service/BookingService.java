@@ -29,13 +29,15 @@ public class BookingService {
     @Autowired
     private PassengerRepository passengerRepository;
 
-    public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+    public List<Booking> getAllBookings(String username, String role) {
+        if (role.equals("ROLE_ADMIN")) {
+            return bookingRepository.findAll();
+        }
+        return bookingRepository.findByCreatedBy(username);
     }
 
     @Transactional
-    public Booking createBooking(BookingRequest request) {
-
+    public Booking createBooking(BookingRequest request, String username) {
         Flight flight = flightRepository.findById(request.getFlightId())
                 .orElseThrow(() -> new ResourceNotFoundException("Flight not found"));
 
@@ -53,13 +55,13 @@ public class BookingService {
         booking.setFlight(flight);
         booking.setPassenger(passenger);
         booking.setBookingDate(LocalDate.now());
+        booking.setCreatedBy(username);
 
         return bookingRepository.save(booking);
     }
 
     @Transactional
     public void cancelBooking(Long id) {
-
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
 

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,13 +23,17 @@ public class BookingController {
     private BookingService bookingService;
 
     @GetMapping
-    public List<Booking> getAllBookings() {
-        return bookingService.getAllBookings();
+    public List<Booking> getAllBookings(Authentication authentication) {
+        String username = authentication.getName();
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
+        return bookingService.getAllBookings(username, role);
     }
 
     @PostMapping
-    public Booking createBooking(@Valid @RequestBody BookingRequest request) {
-        return bookingService.createBooking(request);
+    public Booking createBooking(@Valid @RequestBody BookingRequest request,
+                                 Authentication authentication) {
+        String username = authentication.getName();
+        return bookingService.createBooking(request, username);
     }
 
     @DeleteMapping("/{id}")

@@ -63,12 +63,13 @@ public class BookingServiceTest {
         when(passengerRepository.findById(1L)).thenReturn(Optional.of(passenger));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
 
-        Booking booking = bookingService.createBooking(request);
+        Booking booking = bookingService.createBooking(request, "testuser");
 
         assertNotNull(booking);
         assertEquals(flight, booking.getFlight());
         assertEquals(passenger, booking.getPassenger());
-        assertEquals(9, flight.getTotalSeats()); // seat reduced by 1
+        assertEquals("testuser", booking.getCreatedBy());
+        assertEquals(9, flight.getTotalSeats());
         verify(bookingRepository, times(1)).save(any(Booking.class));
     }
 
@@ -79,7 +80,7 @@ public class BookingServiceTest {
         when(passengerRepository.findById(1L)).thenReturn(Optional.of(passenger));
 
         assertThrows(NoSeatsAvailableException.class, () -> {
-            bookingService.createBooking(request);
+            bookingService.createBooking(request, "testuser");
         });
 
         verify(bookingRepository, never()).save(any(Booking.class));
@@ -90,7 +91,7 @@ public class BookingServiceTest {
         when(flightRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
-            bookingService.createBooking(request);
+            bookingService.createBooking(request, "testuser");
         });
     }
 
@@ -100,7 +101,7 @@ public class BookingServiceTest {
         when(passengerRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
-            bookingService.createBooking(request);
+            bookingService.createBooking(request, "testuser");
         });
     }
 
@@ -115,7 +116,7 @@ public class BookingServiceTest {
 
         bookingService.cancelBooking(1L);
 
-        assertEquals(11, flight.getTotalSeats()); // seat restored
+        assertEquals(11, flight.getTotalSeats());
         verify(bookingRepository, times(1)).deleteById(1L);
     }
 
