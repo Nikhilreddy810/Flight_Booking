@@ -54,6 +54,18 @@ Login at `/auth/login` → copy token → add to protected requests:
 - Covers booking creation, cancellation, seat management and exception handling
 - Run tests: `mvn test`
 
+## 🐳 Docker
+- Containerized using a custom Dockerfile
+- Run without any local Java/MySQL setup
+
+docker build -t flight-booking .
+docker run -p 8080:8080 flight-booking
+
+## ⚡ Redis Caching
+- Integrated Spring Cache with Redis
+- Caches flight data to reduce repeated DB queries
+- Improves response time for high-frequency GET /api/flights calls
+
 ## 📊 Project Stats
 - 14 REST API endpoints
 - 4 database tables
