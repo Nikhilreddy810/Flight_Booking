@@ -1,74 +1,242 @@
 # ✈️ Flight Booking System
-A RESTful backend API for managing flight bookings built with Java and Spring Boot.
-Supports JWT-based authentication, role-based access control, seat management, and passenger booking workflows.
+
+A secure, production-ready REST API built with **Spring Boot** for managing flight bookings with role-based access control, JWT authentication, Redis caching, and Docker support.
+
+---
 
 ## 🛠️ Tech Stack
-- Java 21, Spring Boot 3.5.4
-- Spring Security + JWT Authentication
-- MySQL 8, Spring Data JPA / Hibernate
-- Maven, Swagger UI
-- JUnit 5 + Mockito
 
-## 🚀 Getting Started
-1. Clone the repository
-2. Create MySQL database: `CREATE DATABASE flight_booking;`
-3. Set environment variable: `DB_PASSWORD=your_mysql_password`
-4. Run: `mvn spring-boot:run`
-5. Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+| Category | Technology |
+|---|---|
+| Backend | Java 21, Spring Boot 3.5.4 |
+| Security | Spring Security, JWT Authentication, RBAC |
+| Database | MySQL 8.0, Hibernate JPA |
+| Caching | Redis |
+| Containerization | Docker, Docker Compose |
+| Testing | JUnit 5, Mockito |
+| API Docs | Swagger UI (SpringDoc OpenAPI) |
+| Build Tool | Maven |
 
-## 🔐 API Endpoints
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| POST | /auth/register | Public | Register new user |
-| POST | /auth/login | Public | Get JWT token |
-| GET | /api/flights | Public | View all flights |
-| POST/PUT/DELETE | /api/flights | 🔒 ADMIN | Manage flights |
-| GET/POST/DELETE | /api/bookings | 🔒 JWT | Own bookings (USER) / All (ADMIN) |
-| GET/POST/PUT/DELETE | /api/passengers | 🔒 JWT | Own passengers (USER) / All (ADMIN) |
+---
 
-## 🛡️ Role-Based Access Control (RBAC)
-| Role | Access |
-|------|--------|
-| ROLE_ADMIN | Full access — all flights, bookings, passengers |
-| ROLE_USER | View flights, manage own bookings and passengers only |
+## ✅ Features
 
-**Register with role:**
-```json
-{ "username": "admin", "password": "1234", "role": "ROLE_ADMIN" }
+- JWT-based stateless authentication
+- Role-Based Access Control (ROLE_ADMIN, ROLE_USER)
+- Flight management (CRUD) — Admin only
+- Booking and passenger management
+- Seat availability check with auto-restoration on cancellation
+- Global exception handling with custom exceptions
+- Input validation
+- Redis caching for flight data
+- Dockerized with Docker Compose
+- API documentation via Swagger UI
+
+---
+
+## 📁 Project Structure
+
+```
+src/main/java/com/example/flight/
+├── config/
+│   ├── RedisConfig.java
+│   └── SwaggerConfig.java
+├── controller/
+│   ├── AuthController.java
+│   ├── FlightController.java
+│   ├── BookingController.java
+│   └── PassengerController.java
+├── service/
+│   ├── AuthService.java
+│   ├── FlightService.java
+│   ├── BookingService.java
+│   └── PassengerService.java
+├── repository/
+│   ├── UserRepository.java
+│   ├── FlightRepository.java
+│   ├── BookingRepository.java
+│   └── PassengerRepository.java
+├── entity/
+│   ├── User.java
+│   ├── Flight.java
+│   ├── Booking.java
+│   └── Passenger.java
+├── security/
+│   ├── JwtUtil.java
+│   ├── JwtFilter.java
+│   └── SecurityConfig.java
+└── exception/
+    ├── GlobalExceptionHandler.java
+    └── ResourceNotFoundException.java
 ```
 
-## 🔑 Authentication
-Login at `/auth/login` → copy token → add to protected requests:
-`Authorization: Bearer <your_token>`
+---
 
-## ✅ Key Highlights
-- JWT token based authentication and authorization
-- Role-based access control (ADMIN vs USER)
-- Users can only access their own bookings and passengers
-- Automatic seat restoration on booking cancellation
-- Global exception handling with meaningful error messages
-- Input validation on all request bodies
+## ⚙️ Setup — Local
 
-## 🧪 Testing
-- 6 JUnit tests written for BookingService
-- Covers booking creation, cancellation, seat management and exception handling
-- Run tests: `mvn test`
+### Prerequisites
+- Java 21
+- Maven
+- MySQL 8.0
 
-## 🐳 Docker
-- Containerized using a custom Dockerfile
-- Run without any local Java/MySQL setup
+### Steps
 
-docker build -t flight-booking .
-docker run -p 8080:8080 flight-booking
+**1. Clone the repository**
+```bash
+git clone https://github.com/Nikhilreddy810/Flight_Booking.git
+cd Flight_Booking
+```
 
-## ⚡ Redis Caching
-- Integrated Spring Cache with Redis
-- Caches flight data to reduce repeated DB queries
-- Improves response time for high-frequency GET /api/flights calls
+**2. Create MySQL database**
+```sql
+CREATE DATABASE flight_booking;
+```
 
-## 📊 Project Stats
-- 14 REST API endpoints
-- 4 database tables
-- 6 JUnit tests — all passing
-- JWT secured APIs
-- RBAC implemented
+**3. Configure application.properties**
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/flight_booking
+spring.datasource.username=root
+spring.datasource.password=your_password
+spring.jpa.hibernate.ddl-auto=update
+jwt.secret=yourSecretKey
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+```
+
+**4. Run Redis**
+```bash
+docker run -d -p 6379:6379 --name redis redis
+```
+
+**5. Run the application**
+```bash
+mvn spring-boot:run
+```
+
+---
+
+## 🐳 Setup — Docker Compose
+
+### Prerequisites
+- Docker Desktop
+
+### Steps
+
+**1. Build the JAR**
+```bash
+mvn clean package -DskipTests
+```
+
+**2. Start all services**
+```bash
+docker-compose up --build
+```
+
+This starts:
+- MySQL on port 3307
+- Redis on port 6379
+- Spring Boot app on port 8080
+
+---
+
+## 📌 API Endpoints
+
+### Auth
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | /api/auth/register | Public | Register user |
+| POST | /api/auth/login | Public | Login and get JWT token |
+
+### Flights
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| GET | /api/flights | Public | Get all flights |
+| GET | /api/flights/{id} | Public | Get flight by ID |
+| POST | /api/flights | ADMIN | Add flight |
+| PUT | /api/flights/{id} | ADMIN | Update flight |
+| DELETE | /api/flights/{id} | ADMIN | Delete flight |
+
+### Bookings
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| GET | /api/bookings | ADMIN/USER | Get bookings |
+| POST | /api/bookings | USER | Create booking |
+| DELETE | /api/bookings/{id} | ADMIN/USER | Cancel booking |
+
+### Passengers
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| GET | /api/passengers | ADMIN/USER | Get passengers |
+| POST | /api/passengers | USER | Add passenger |
+| DELETE | /api/passengers/{id} | ADMIN/USER | Delete passenger |
+
+---
+
+## 📬 Sample Requests
+
+### Register
+```json
+POST /api/auth/register
+{
+  "username": "nikhil",
+  "password": "pass123",
+  "role": "ROLE_USER"
+}
+```
+
+### Login
+```json
+POST /api/auth/login
+{
+  "username": "nikhil",
+  "password": "pass123"
+}
+```
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+### Add Flight (Admin)
+```json
+POST /api/flights
+Authorization: Bearer <token>
+{
+  "flightNumber": "AI101",
+  "airline": "Air India",
+  "source": "Hyderabad",
+  "destination": "Delhi",
+  "totalSeats": 100,
+  "price": 4500.0
+}
+```
+
+---
+
+## 📖 API Documentation
+
+Swagger UI available at:
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
+---
+
+## 🧪 Running Tests
+
+```bash
+mvn test
+```
+
+6 unit tests covering BookingService and PassengerService using JUnit 5 and Mockito.
+
+---
+
+## 👤 Author
+
+**Nikhil Reddy Levaku**
+- GitHub: [github.com/Nikhilreddy810](https://github.com/Nikhilreddy810)
+- LinkedIn: [linkedin.com/in/nikhilreddylevaku](https://linkedin.com/in/nikhilreddylevaku)
+- Email: levakunikhilreddy8@gmail.com
