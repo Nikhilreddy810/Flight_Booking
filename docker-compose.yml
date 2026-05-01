@@ -7,6 +7,11 @@ services:
       MYSQL_DATABASE: flight_booking
     ports:
       - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -25,5 +30,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: Strange@22
       SPRING_DATA_REDIS_HOST: redis
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
