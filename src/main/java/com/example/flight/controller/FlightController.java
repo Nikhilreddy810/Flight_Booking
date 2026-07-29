@@ -1,14 +1,16 @@
 package com.example.flight.controller;
 import com.example.flight.entity.Flight;
 import com.example.flight.service.FlightService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import static org.springframework.http.ResponseEntity.*;
 
 @RestController
 @RequestMapping("/api/flights")
+@SecurityRequirement(name = "bearerAuth")
 public class FlightController {
 
     @Autowired
@@ -20,35 +22,24 @@ public class FlightController {
     }
 
     @PostMapping
-    public Flight addFlight(@RequestBody Flight flight) {
+    public Flight addFlight(@Valid @RequestBody Flight flight) {
         return flightService.addFlight(flight);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Flight> getFlightById(@PathVariable Long id) {
-        return flightService.getFlightById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> notFound().build());
+    public Flight getFlightById(@PathVariable Long id) {
+        return flightService.getFlightByIdOrThrow(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Flight> updateFlight(@PathVariable Long id,
-                                               @RequestBody Flight updatedFlight) {
-        return flightService.getFlightById(id)
-                .map(existing -> {
-                    Flight saved = flightService.updateFlight(id, updatedFlight);
-                    return ok(saved);
-                })
-                .orElseGet(() -> notFound().build());
+    public Flight updateFlight(@PathVariable Long id,
+                               @Valid @RequestBody Flight updatedFlight) {
+        return flightService.updateFlight(id, updatedFlight);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteFlight(@PathVariable Long id) {
-        return flightService.getFlightById(id)
-                .map(flight -> {
-                    flightService.deleteFlight(id);
-                    return ResponseEntity.noContent().build();
-                })
-                .orElseGet(() -> notFound().build());
+    public ResponseEntity<Void> deleteFlight(@PathVariable Long id) {
+        flightService.deleteFlight(id);
+        return ResponseEntity.noContent().build();
     }
 }

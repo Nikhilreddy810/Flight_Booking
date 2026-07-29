@@ -1,6 +1,7 @@
 package com.example.flight.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 
 @Entity
 @Table(name = "flight")
@@ -10,11 +11,27 @@ public class Flight {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Flight number cannot be empty")
     private String flightNumber;
+
+    @NotBlank(message = "Airline cannot be empty")
     private String airline;
+
+    @NotBlank(message = "Source cannot be empty")
     private String source;
+
+    @NotBlank(message = "Destination cannot be empty")
     private String destination;
+
+    @Min(value = 1, message = "Total seats must be greater than 0")
     private int totalSeats;
+
+    // Seats still open for booking. Set from totalSeats when the flight is created,
+    // decremented on booking and restored on cancellation.
+    @Column(nullable = false)
+    private int availableSeats;
+
+    @PositiveOrZero(message = "Price cannot be negative")
     private double price;
 
     public Flight() {}
@@ -66,6 +83,14 @@ public class Flight {
 
     public void setTotalSeats(int totalSeats) {
         this.totalSeats = totalSeats;
+    }
+
+    public int getAvailableSeats() {
+        return availableSeats;
+    }
+
+    public void setAvailableSeats(int availableSeats) {
+        this.availableSeats = availableSeats;
     }
 
     public double getPrice() {

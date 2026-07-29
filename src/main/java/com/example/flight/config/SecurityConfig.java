@@ -2,6 +2,9 @@ package com.example.flight.config;
 
 import com.example.flight.repository.UserRepository;
 import com.example.flight.security.JwtFilter;
+import com.example.flight.security.RestAccessDeniedHandler;
+import com.example.flight.security.RestAuthenticationEntryPoint;
+import com.example.flight.security.Roles;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +32,12 @@ public class SecurityConfig {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private RestAuthenticationEntryPoint authenticationEntryPoint;
+
+    @Autowired
+    private RestAccessDeniedHandler accessDeniedHandler;
+
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
@@ -49,15 +58,18 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/flights/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/flights/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/flights/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/flights/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/flights/**").hasAuthority(Roles.ADMIN)
+                .requestMatchers(HttpMethod.PUT, "/api/flights/**").hasAuthority(Roles.ADMIN)
+                .requestMatchers(HttpMethod.DELETE, "/api/flights/**").hasAuthority(Roles.ADMIN)
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

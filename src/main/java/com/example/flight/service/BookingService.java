@@ -9,8 +9,11 @@ import com.example.flight.exception.ResourceNotFoundException;
 import com.example.flight.repository.BookingRepository;
 import com.example.flight.repository.FlightRepository;
 import com.example.flight.repository.PassengerRepository;
+import com.example.flight.security.Roles;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,25 +33,27 @@ public class BookingService {
     private PassengerRepository passengerRepository;
 
     public List<Booking> getAllBookings(String username, String role) {
-        if (role.equals("ROLE_ADMIN")) {
+        if (Roles.isAdmin(role)) {
             return bookingRepository.findAll();
         }
         return bookingRepository.findByCreatedBy(username);
     }
 
     @Transactional
+    @CacheEvict(value = "flights", allEntries = true)
     public Booking createBooking(BookingRequest request, String username) {
-        Flight flight = flightRepository.findById(request.getFlightId())
+        // Locked read: two concurrent bookings for the last seat must not both succeed.
+        Flight flight = flightRepository.findByIdForUpdate(request.getFlightId())
                 .orElseThrow(() -> new ResourceNotFoundException("Flight not found"));
 
         Passenger passenger = passengerRepository.findById(request.getPassengerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Passenger not found"));
 
-        if (flight.getTotalSeats() <= 0) {
+        if (flight.getAvailableSeats() <= 0) {
             throw new NoSeatsAvailableException("No seats available for this flight");
         }
 
-        flight.setTotalSeats(flight.getTotalSeats() - 1);
+        flight.setAvailableSeats(flight.getAvailableSeats() - 1);
         flightRepository.save(flight);
 
         Booking booking = new Booking();
@@ -61,14 +66,22 @@ public class BookingService {
     }
 
     @Transactional
-    public void cancelBooking(Long id) {
+    @CacheEvict(value = "flights", allEntries = true)
+    public void cancelBooking(Long id, String username, String role) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
 
-        Flight flight = booking.getFlight();
-        flight.setTotalSeats(flight.getTotalSeats() + 1);
+        if (!Roles.isAdmin(role) && !username.equals(booking.getCreatedBy())) {
+            throw new AccessDeniedException("You are not allowed to cancel this booking");
+        }
+
+        Flight flight = flightRepository.findByIdForUpdate(booking.getFlight().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Flight not found"));
+
+        // Never restore past the aircraft's capacity.
+        flight.setAvailableSeats(Math.min(flight.getTotalSeats(), flight.getAvailableSeats() + 1));
         flightRepository.save(flight);
 
-        bookingRepository.deleteById(id);
+        bookingRepository.delete(booking);
     }
 }

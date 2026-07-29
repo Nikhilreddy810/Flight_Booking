@@ -1,5 +1,6 @@
 package com.example.flight.controller;
 
+import com.example.flight.dto.MessageResponse;
 import com.example.flight.entity.Passenger;
 import com.example.flight.service.PassengerService;
 
@@ -23,26 +24,30 @@ public class PassengerController {
     @PostMapping
     public Passenger createPassenger(@Valid @RequestBody Passenger passenger,
                                      Authentication authentication) {
-        String username = authentication.getName();
-        return passengerService.savePassenger(passenger, username);
+        return passengerService.savePassenger(passenger, authentication.getName());
     }
 
     @GetMapping
     public List<Passenger> getAllPassengers(Authentication authentication) {
-        String username = authentication.getName();
-        String role = authentication.getAuthorities().iterator().next().getAuthority();
-        return passengerService.getAllPassengers(username, role);
+        return passengerService.getAllPassengers(authentication.getName(), roleOf(authentication));
     }
 
     @PutMapping("/{id}")
     public Passenger updatePassenger(@PathVariable Long id,
-                                     @Valid @RequestBody Passenger passenger) {
-        return passengerService.updatePassenger(id, passenger);
+                                     @Valid @RequestBody Passenger passenger,
+                                     Authentication authentication) {
+        return passengerService.updatePassenger(id, passenger,
+                authentication.getName(), roleOf(authentication));
     }
 
     @DeleteMapping("/{id}")
-    public String deletePassenger(@PathVariable Long id) {
-        passengerService.deletePassenger(id);
-        return "Passenger deleted successfully";
+    public MessageResponse deletePassenger(@PathVariable Long id,
+                                           Authentication authentication) {
+        passengerService.deletePassenger(id, authentication.getName(), roleOf(authentication));
+        return new MessageResponse("Passenger deleted successfully");
+    }
+
+    private String roleOf(Authentication authentication) {
+        return authentication.getAuthorities().iterator().next().getAuthority();
     }
 }

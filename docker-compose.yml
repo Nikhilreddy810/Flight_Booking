@@ -3,10 +3,14 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: Strange@22
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set — copy .env.example to .env}
       MYSQL_DATABASE: flight_booking
     ports:
       - "3307:3306"
+    volumes:
+      # Without this the database lives in the container layer and
+      # `docker compose down` destroys it.
+      - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -18,6 +22,11 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
@@ -27,10 +36,16 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flight_booking
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Strange@22
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set — copy .env.example to .env}
       SPRING_DATA_REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is not set — copy .env.example to .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+
+volumes:
+  mysql_data:

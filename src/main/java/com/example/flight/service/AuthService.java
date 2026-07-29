@@ -1,8 +1,11 @@
 package com.example.flight.service;
 
 import com.example.flight.entity.User;
+import com.example.flight.exception.InvalidCredentialsException;
+import com.example.flight.exception.UserAlreadyExistsException;
 import com.example.flight.repository.UserRepository;
 import com.example.flight.security.JwtUtil;
+import com.example.flight.security.Roles;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,24 +23,29 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public String register(String username, String password, String role) {
+    /**
+     * Public self-registration. The role is never taken from the request body —
+     * every account created here is a plain ROLE_USER. Admin accounts are
+     * provisioned by AdminSeeder from configuration instead.
+     */
+    public String register(String username, String password) {
         if (userRepository.findByUsername(username).isPresent()) {
-            throw new RuntimeException("Username already exists");
+            throw new UserAlreadyExistsException("Username already exists");
         }
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(role != null ? role : "ROLE_USER");
+        user.setRole(Roles.USER);
         userRepository.save(user);
         return "User registered successfully";
     }
 
     public String login(String username, String password) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new InvalidCredentialsException("Invalid username or password");
         }
 
         return jwtUtil.generateToken(username, user.getRole());

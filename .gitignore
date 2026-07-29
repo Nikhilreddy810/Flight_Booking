@@ -32,4 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-src/main/resources/application.properties
+### Local secrets ###
+# application.properties is tracked but holds no secrets — they come from these.
+.env
+*.env
+!.env.example
