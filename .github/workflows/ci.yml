@@ -1,0 +1,32 @@
+name: FBS Microservices CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build Auth Service
+        working-directory: flight-auth-service
+        run: ./gradlew build -x test
+
+      - name: Build Flight Service
+        working-directory: flight-flight-service
+        run: ./gradlew build -x test
+
+      - name: Build Booking Service
+        working-directory: flight-booking-service
+        run: ./gradlew build -x test

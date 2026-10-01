@@ -1,0 +1,14 @@
+.git
+.github
+.gradle
+**/.gradle
+build
+**/build
+bin
+**/bin
+target
+**/target
+.env
+**/.env
+application-local.properties
+**/application-local.properties
