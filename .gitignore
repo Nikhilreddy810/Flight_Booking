@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+**/.gradle/
+build/
+**/build/
+
+# Java compiled files
+bin/
+**/bin/
+target/
+**/target/
+
+# Local configuration / secrets
+.env
+**/.env
+application-local.properties
+**/application-local.properties
+
+# IDE
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
