@@ -1,6 +1,5 @@
-package com.example.flight_flight_service.config;
+package com.example.flight_auth_service.config;
 
-import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -12,18 +11,16 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
     @Bean
-    public OpenAPI flightServiceOpenAPI() {
+    public OpenAPI authServiceOpenAPI() {
         return new OpenAPI()
                 .info(
                         new Info()
-                                .title("Flight Service API")
-                                .description(
-                                        "Microservice responsible for flight inventory and seat management"
-                                )
+                                .title("Flight Auth Service API")
+                                .description("Authentication and JWT management")
                                 .version("1.0.0")
                 )
                 .components(
-                        new Components()
+                        new io.swagger.v3.oas.models.Components()
                                 .addSecuritySchemes(
                                         "bearerAuth",
                                         new SecurityScheme()

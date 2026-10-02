@@ -7,6 +7,8 @@ import com.example.flight_booking_service.service.PassengerService;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,42 +23,60 @@ public class PassengerController {
     @PostMapping
     public Passenger createPassenger(
             @Valid @RequestBody Passenger passenger,
-            @RequestHeader("X-Username") String username) {
+            Authentication authentication) {
 
-        return passengerService.savePassenger(passenger, username);
+        return passengerService.savePassenger(
+                passenger,
+                authentication.getName()
+        );
     }
 
     @GetMapping
     public List<Passenger> getAllPassengers(
-            @RequestHeader("X-Username") String username,
-            @RequestHeader(value = "X-Role", defaultValue = "ROLE_USER") String role) {
+            Authentication authentication) {
 
-        return passengerService.getAllPassengers(username, role);
+        return passengerService.getAllPassengers(
+                authentication.getName(),
+                getRole(authentication)
+        );
     }
 
     @PutMapping("/{id}")
     public Passenger updatePassenger(
             @PathVariable Long id,
             @Valid @RequestBody Passenger passenger,
-            @RequestHeader("X-Username") String username,
-            @RequestHeader(value = "X-Role", defaultValue = "ROLE_USER") String role) {
+            Authentication authentication) {
 
         return passengerService.updatePassenger(
                 id,
                 passenger,
-                username,
-                role
+                authentication.getName(),
+                getRole(authentication)
         );
     }
 
     @DeleteMapping("/{id}")
     public MessageResponse deletePassenger(
             @PathVariable Long id,
-            @RequestHeader("X-Username") String username,
-            @RequestHeader(value = "X-Role", defaultValue = "ROLE_USER") String role) {
+            Authentication authentication) {
 
-        passengerService.deletePassenger(id, username, role);
+        passengerService.deletePassenger(
+                id,
+                authentication.getName(),
+                getRole(authentication)
+        );
 
-        return new MessageResponse("Passenger deleted successfully");
+        return new MessageResponse(
+                "Passenger deleted successfully"
+        );
+    }
+
+    private String getRole(Authentication authentication) {
+
+        return authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_USER");
     }
 }

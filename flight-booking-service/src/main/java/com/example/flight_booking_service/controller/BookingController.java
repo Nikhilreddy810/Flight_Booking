@@ -8,6 +8,8 @@ import com.example.flight_booking_service.service.BookingService;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,28 +23,53 @@ public class BookingController {
 
     @GetMapping
     public List<Booking> getAllBookings(
-            @RequestHeader("X-Username") String username,
-            @RequestHeader(value = "X-Role", defaultValue = "ROLE_USER") String role) {
+            Authentication authentication) {
 
-        return bookingService.getAllBookings(username, role);
+        String username = authentication.getName();
+        String role = getRole(authentication);
+
+        return bookingService.getAllBookings(
+                username,
+                role
+        );
     }
 
     @PostMapping
     public Booking createBooking(
             @Valid @RequestBody BookingRequest request,
-            @RequestHeader("X-Username") String username) {
+            Authentication authentication) {
 
-        return bookingService.createBooking(request, username);
+        return bookingService.createBooking(
+                request,
+                authentication.getName()
+        );
     }
 
     @DeleteMapping("/{id}")
     public MessageResponse cancelBooking(
             @PathVariable Long id,
-            @RequestHeader("X-Username") String username,
-            @RequestHeader(value = "X-Role", defaultValue = "ROLE_USER") String role) {
+            Authentication authentication) {
 
-        bookingService.cancelBooking(id, username, role);
+        String username = authentication.getName();
+        String role = getRole(authentication);
 
-        return new MessageResponse("Booking cancelled successfully");
+        bookingService.cancelBooking(
+                id,
+                username,
+                role
+        );
+
+        return new MessageResponse(
+                "Booking cancelled successfully"
+        );
+    }
+
+    private String getRole(Authentication authentication) {
+
+        return authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_USER");
     }
 }
