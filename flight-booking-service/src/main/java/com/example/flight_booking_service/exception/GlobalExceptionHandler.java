@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import org.springframework.validation.FieldError;
@@ -22,10 +21,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log =
-            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+            LoggerFactory.getLogger(
+                    GlobalExceptionHandler.class
+            );
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleResourceNotFound(
+    public ResponseEntity<Map<String, Object>>
+    handleResourceNotFound(
             ResourceNotFoundException ex) {
 
         return build(
@@ -35,7 +37,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoSeatsAvailableException.class)
-    public ResponseEntity<Map<String, Object>> handleNoSeats(
+    public ResponseEntity<Map<String, Object>>
+    handleNoSeats(
             NoSeatsAvailableException ex) {
 
         return build(
@@ -45,7 +48,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleAccessDenied(
+    public ResponseEntity<Map<String, Object>>
+    handleAccessDenied(
             AccessDeniedException ex) {
 
         return build(
@@ -55,7 +59,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(
+    public ResponseEntity<Map<String, Object>>
+    handleValidationErrors(
             MethodArgumentNotValidException ex) {
 
         Map<String, String> fieldErrors =
@@ -76,7 +81,10 @@ public class GlobalExceptionHandler {
                         "Validation failed"
                 );
 
-        response.put("errors", fieldErrors);
+        response.put(
+                "errors",
+                fieldErrors
+        );
 
         return new ResponseEntity<>(
                 response,
@@ -84,22 +92,30 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> handleUnreadableBody(
+    @ExceptionHandler(
+            HttpMessageNotReadableException.class
+    )
+    public ResponseEntity<Map<String, Object>>
+    handleUnreadableBody(
             HttpMessageNotReadableException ex) {
 
         return build(
                 HttpStatus.BAD_REQUEST,
-                "Malformed or missing request body"
+                "Malformed or invalid request body"
         );
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ExceptionHandler(
+            DataIntegrityViolationException.class
+    )
     public ResponseEntity<Map<String, Object>>
     handleDataIntegrityViolation(
             DataIntegrityViolationException ex) {
 
-        log.warn("Data integrity violation", ex);
+        log.warn(
+                "Data integrity violation",
+                ex
+        );
 
         return build(
                 HttpStatus.CONFLICT,
@@ -111,7 +127,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>>
     handleGenericException(Exception ex) {
 
-        log.error("Unhandled exception", ex);
+        log.error(
+                "Unhandled exception",
+                ex
+        );
 
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -119,7 +138,8 @@ public class GlobalExceptionHandler {
         );
     }
 
-    private ResponseEntity<Map<String, Object>> build(
+    private ResponseEntity<Map<String, Object>>
+    build(
             HttpStatus status,
             String message) {
 
@@ -129,15 +149,23 @@ public class GlobalExceptionHandler {
         );
     }
 
-    private Map<String, Object> body(
+    private Map<String, Object>
+    body(
             HttpStatus status,
             String message) {
 
         Map<String, Object> response =
                 new LinkedHashMap<>();
 
-        response.put("status", status.value());
-        response.put("message", message);
+        response.put(
+                "status",
+                status.value()
+        );
+
+        response.put(
+                "message",
+                message
+        );
 
         return response;
     }

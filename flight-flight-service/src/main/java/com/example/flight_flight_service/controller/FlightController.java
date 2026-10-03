@@ -1,5 +1,6 @@
 package com.example.flight_flight_service.controller;
 
+import com.example.flight_flight_service.dto.FlightRequest;
 import com.example.flight_flight_service.entity.Flight;
 import com.example.flight_flight_service.service.FlightService;
 
@@ -20,14 +21,15 @@ public class FlightController {
 
     @GetMapping
     public List<Flight> getAllFlights() {
+
         return flightService.getAllFlights();
     }
 
     @PostMapping
     public Flight addFlight(
-            @Valid @RequestBody Flight flight) {
+            @Valid @RequestBody FlightRequest request) {
 
-        return flightService.addFlight(flight);
+        return flightService.addFlight(request);
     }
 
     @GetMapping("/{id}")
@@ -40,11 +42,11 @@ public class FlightController {
     @PutMapping("/{id}")
     public Flight updateFlight(
             @PathVariable("id") Long id,
-            @Valid @RequestBody Flight updatedFlight) {
+            @Valid @RequestBody FlightRequest request) {
 
         return flightService.updateFlight(
                 id,
-                updatedFlight
+                request
         );
     }
 

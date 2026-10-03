@@ -1,5 +1,6 @@
 package com.example.flight_booking_service.service;
 
+import com.example.flight_booking_service.dto.PassengerRequest;
 import com.example.flight_booking_service.entity.Passenger;
 import com.example.flight_booking_service.exception.AccessDeniedException;
 import com.example.flight_booking_service.exception.ResourceNotFoundException;
@@ -16,11 +17,19 @@ public class PassengerService {
     @Autowired
     private PassengerRepository passengerRepository;
 
-    public Passenger savePassenger(
-            Passenger passenger,
+    public Passenger createPassenger(
+            PassengerRequest request,
             String username) {
 
-        passenger.setId(null);
+        Passenger passenger = new Passenger();
+
+        passenger.setName(request.getName());
+        passenger.setEmail(request.getEmail());
+        passenger.setAge(request.getAge());
+        passenger.setContact(request.getContact());
+
+        // Never accept createdBy from the client.
+        // It always comes from the authenticated JWT.
         passenger.setCreatedBy(username);
 
         return passengerRepository.save(passenger);
@@ -39,17 +48,19 @@ public class PassengerService {
 
     public Passenger updatePassenger(
             Long id,
-            Passenger updatedPassenger,
+            PassengerRequest request,
             String username,
             String role) {
 
         Passenger existing =
                 findOwned(id, username, role);
 
-        existing.setName(updatedPassenger.getName());
-        existing.setEmail(updatedPassenger.getEmail());
-        existing.setAge(updatedPassenger.getAge());
-        existing.setContact(updatedPassenger.getContact());
+        existing.setName(request.getName());
+        existing.setEmail(request.getEmail());
+        existing.setAge(request.getAge());
+        existing.setContact(request.getContact());
+
+        // ID and createdBy remain unchanged.
 
         return passengerRepository.save(existing);
     }

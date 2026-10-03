@@ -1,5 +1,6 @@
 package com.example.flight_flight_service.service;
 
+import com.example.flight_flight_service.dto.FlightRequest;
 import com.example.flight_flight_service.entity.Flight;
 import com.example.flight_flight_service.exception.NoSeatsAvailableException;
 import com.example.flight_flight_service.exception.ResourceNotFoundException;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class FlightService {
@@ -22,23 +22,28 @@ public class FlightService {
 
     @Cacheable("flights")
     public List<Flight> getAllFlights() {
+
         return flightRepository.findAll();
     }
 
     @CacheEvict(value = "flights", allEntries = true)
-    public Flight addFlight(Flight flight) {
+    public Flight addFlight(FlightRequest request) {
 
-        flight.setId(null);
+        Flight flight = new Flight();
 
+        flight.setFlightNumber(request.getFlightNumber());
+        flight.setAirline(request.getAirline());
+        flight.setSource(request.getSource());
+        flight.setDestination(request.getDestination());
+        flight.setTotalSeats(request.getTotalSeats());
+        flight.setPrice(request.getPrice());
+
+        // Server controls available seats.
         flight.setAvailableSeats(
-                flight.getTotalSeats()
+                request.getTotalSeats()
         );
 
         return flightRepository.save(flight);
-    }
-
-    public Optional<Flight> getFlightById(Long id) {
-        return flightRepository.findById(id);
     }
 
     public Flight getFlightByIdOrThrow(Long id) {
@@ -54,7 +59,8 @@ public class FlightService {
     @CacheEvict(value = "flights", allEntries = true)
     public void deleteFlight(Long id) {
 
-        Flight flight = getFlightByIdOrThrow(id);
+        Flight flight =
+                getFlightByIdOrThrow(id);
 
         flightRepository.delete(flight);
     }
@@ -62,68 +68,68 @@ public class FlightService {
     @CacheEvict(value = "flights", allEntries = true)
     public Flight updateFlight(
             Long id,
-            Flight updatedFlight) {
+            FlightRequest request) {
 
-        Flight existing = getFlightByIdOrThrow(id);
+        Flight existing =
+                getFlightByIdOrThrow(id);
 
         int bookedSeats =
                 existing.getTotalSeats()
                         - existing.getAvailableSeats();
 
+        if (request.getTotalSeats() < bookedSeats) {
+
+            throw new IllegalArgumentException(
+                    "Total seats cannot be less than already booked seats: "
+                            + bookedSeats
+            );
+        }
+
         existing.setFlightNumber(
-                updatedFlight.getFlightNumber()
+                request.getFlightNumber()
         );
 
         existing.setAirline(
-                updatedFlight.getAirline()
+                request.getAirline()
         );
 
         existing.setSource(
-                updatedFlight.getSource()
+                request.getSource()
         );
 
         existing.setDestination(
-                updatedFlight.getDestination()
+                request.getDestination()
         );
 
         existing.setPrice(
-                updatedFlight.getPrice()
+                request.getPrice()
         );
 
         existing.setTotalSeats(
-                updatedFlight.getTotalSeats()
+                request.getTotalSeats()
         );
 
         existing.setAvailableSeats(
-                Math.max(
-                        0,
-                        updatedFlight.getTotalSeats()
-                                - bookedSeats
-                )
+                request.getTotalSeats()
+                        - bookedSeats
         );
 
         return flightRepository.save(existing);
     }
 
-    /**
-     * Reserve exactly one seat.
-     *
-     * The pessimistic database lock guarantees that
-     * concurrent booking requests cannot reserve the
-     * same available seat.
-     */
     @Transactional
     @CacheEvict(value = "flights", allEntries = true)
     public Flight reserveSeat(Long flightId) {
 
-        Flight flight = flightRepository
-                .findByIdForUpdate(flightId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Flight not found with id: "
-                                        + flightId
-                        )
-                );
+        Flight flight =
+                flightRepository
+                        .findByIdForUpdate(flightId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Flight not found with id: "
+                                                + flightId
+                                )
+                        );
 
         if (flight.getAvailableSeats() <= 0) {
 
@@ -140,24 +146,19 @@ public class FlightService {
         return flightRepository.save(flight);
     }
 
-    /**
-     * Release exactly one seat.
-     *
-     * The same row lock is used so that concurrent
-     * reserve/release operations remain consistent.
-     */
     @Transactional
     @CacheEvict(value = "flights", allEntries = true)
     public Flight releaseSeat(Long flightId) {
 
-        Flight flight = flightRepository
-                .findByIdForUpdate(flightId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Flight not found with id: "
-                                        + flightId
-                        )
-                );
+        Flight flight =
+                flightRepository
+                        .findByIdForUpdate(flightId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Flight not found with id: "
+                                                + flightId
+                                )
+                        );
 
         if (flight.getAvailableSeats()
                 >= flight.getTotalSeats()) {

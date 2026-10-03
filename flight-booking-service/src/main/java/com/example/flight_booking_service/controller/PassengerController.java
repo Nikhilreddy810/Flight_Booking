@@ -1,6 +1,7 @@
 package com.example.flight_booking_service.controller;
 
 import com.example.flight_booking_service.dto.MessageResponse;
+import com.example.flight_booking_service.dto.PassengerRequest;
 import com.example.flight_booking_service.entity.Passenger;
 import com.example.flight_booking_service.service.PassengerService;
 
@@ -22,11 +23,11 @@ public class PassengerController {
 
     @PostMapping
     public Passenger createPassenger(
-            @Valid @RequestBody Passenger passenger,
+            @Valid @RequestBody PassengerRequest request,
             Authentication authentication) {
 
-        return passengerService.savePassenger(
-                passenger,
+        return passengerService.createPassenger(
+                request,
                 authentication.getName()
         );
     }
@@ -43,13 +44,13 @@ public class PassengerController {
 
     @PutMapping("/{id}")
     public Passenger updatePassenger(
-            @PathVariable Long id,
-            @Valid @RequestBody Passenger passenger,
+            @PathVariable("id") Long id,
+            @Valid @RequestBody PassengerRequest request,
             Authentication authentication) {
 
         return passengerService.updatePassenger(
                 id,
-                passenger,
+                request,
                 authentication.getName(),
                 getRole(authentication)
         );
@@ -57,7 +58,7 @@ public class PassengerController {
 
     @DeleteMapping("/{id}")
     public MessageResponse deletePassenger(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
 
         passengerService.deletePassenger(

@@ -25,12 +25,9 @@ public class BookingController {
     public List<Booking> getAllBookings(
             Authentication authentication) {
 
-        String username = authentication.getName();
-        String role = getRole(authentication);
-
         return bookingService.getAllBookings(
-                username,
-                role
+                authentication.getName(),
+                getRole(authentication)
         );
     }
 
@@ -47,16 +44,13 @@ public class BookingController {
 
     @DeleteMapping("/{id}")
     public MessageResponse cancelBooking(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             Authentication authentication) {
-
-        String username = authentication.getName();
-        String role = getRole(authentication);
 
         bookingService.cancelBooking(
                 id,
-                username,
-                role
+                authentication.getName(),
+                getRole(authentication)
         );
 
         return new MessageResponse(

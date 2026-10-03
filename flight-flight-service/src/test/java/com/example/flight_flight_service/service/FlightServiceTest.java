@@ -1,5 +1,6 @@
 package com.example.flight_flight_service.service;
 
+import com.example.flight_flight_service.dto.FlightRequest;
 import com.example.flight_flight_service.entity.Flight;
 import com.example.flight_flight_service.exception.NoSeatsAvailableException;
 import com.example.flight_flight_service.exception.ResourceNotFoundException;
@@ -30,6 +31,7 @@ class FlightServiceTest {
     private FlightService flightService;
 
     private Flight flight;
+    private FlightRequest flightRequest;
 
     @BeforeEach
     void setUp() {
@@ -44,6 +46,15 @@ class FlightServiceTest {
         flight.setTotalSeats(100);
         flight.setAvailableSeats(100);
         flight.setPrice(5000.0);
+
+        flightRequest = new FlightRequest();
+
+        flightRequest.setFlightNumber("FL1001");
+        flightRequest.setAirline("IndiGo");
+        flightRequest.setSource("Hyderabad");
+        flightRequest.setDestination("Delhi");
+        flightRequest.setTotalSeats(100);
+        flightRequest.setPrice(5000.0);
     }
 
     @Test
@@ -57,8 +68,11 @@ class FlightServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("FL1001",
-                result.get(0).getFlightNumber());
+
+        assertEquals(
+                "FL1001",
+                result.get(0).getFlightNumber()
+        );
 
         verify(flightRepository)
                 .findAll();
@@ -67,27 +81,52 @@ class FlightServiceTest {
     @Test
     void addFlight_success() {
 
-        flight.setId(99L);
-        flight.setAvailableSeats(20);
-
         when(flightRepository.save(any(Flight.class)))
                 .thenAnswer(invocation ->
                         invocation.getArgument(0));
 
         Flight result =
-                flightService.addFlight(flight);
+                flightService.addFlight(flightRequest);
 
-        assertNull(result.getId());
+        assertNotNull(result);
+
         assertEquals(
-                result.getTotalSeats(),
+                "FL1001",
+                result.getFlightNumber()
+        );
+
+        assertEquals(
+                "IndiGo",
+                result.getAirline()
+        );
+
+        assertEquals(
+                "Hyderabad",
+                result.getSource()
+        );
+
+        assertEquals(
+                "Delhi",
+                result.getDestination()
+        );
+
+        assertEquals(
+                100,
+                result.getTotalSeats()
+        );
+
+        assertEquals(
+                100,
                 result.getAvailableSeats()
         );
 
-        assertEquals(100,
-                result.getAvailableSeats());
+        assertEquals(
+                5000.0,
+                result.getPrice()
+        );
 
         verify(flightRepository)
-                .save(flight);
+                .save(any(Flight.class));
     }
 
     @Test
@@ -96,13 +135,19 @@ class FlightServiceTest {
         when(flightRepository.findById(1L))
                 .thenReturn(Optional.of(flight));
 
-        Optional<Flight> result =
-                flightService.getFlightById(1L);
+        Flight result =
+                flightService.getFlightByIdOrThrow(1L);
 
-        assertTrue(result.isPresent());
+        assertNotNull(result);
+
+        assertEquals(
+                1L,
+                result.getId()
+        );
+
         assertEquals(
                 "FL1001",
-                result.get().getFlightNumber()
+                result.getFlightNumber()
         );
 
         verify(flightRepository)
@@ -110,23 +155,7 @@ class FlightServiceTest {
     }
 
     @Test
-    void getFlightByIdOrThrow_success() {
-
-        when(flightRepository.findById(1L))
-                .thenReturn(Optional.of(flight));
-
-        Flight result =
-                flightService.getFlightByIdOrThrow(1L);
-
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-
-        verify(flightRepository)
-                .findById(1L);
-    }
-
-    @Test
-    void getFlightByIdOrThrow_notFound() {
+    void getFlightById_notFound() {
 
         when(flightRepository.findById(99L))
                 .thenReturn(Optional.empty());
@@ -156,19 +185,48 @@ class FlightServiceTest {
     }
 
     @Test
+    void deleteFlight_notFound() {
+
+        when(flightRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> flightService.deleteFlight(99L)
+        );
+
+        verify(flightRepository)
+                .findById(99L);
+
+        verify(
+                flightRepository,
+                never()
+        ).delete(any(Flight.class));
+    }
+
+    @Test
     void updateFlight_success() {
 
-        Flight updatedFlight = new Flight();
-
-        updatedFlight.setFlightNumber("FL2001");
-        updatedFlight.setAirline("Air India");
-        updatedFlight.setSource("Mumbai");
-        updatedFlight.setDestination("Bangalore");
-        updatedFlight.setPrice(6000.0);
-        updatedFlight.setTotalSeats(120);
+        /*
+         * Existing flight:
+         *
+         * Total seats = 100
+         * Available seats = 90
+         * Booked seats = 10
+         */
 
         flight.setTotalSeats(100);
         flight.setAvailableSeats(90);
+
+        FlightRequest updatedRequest =
+                new FlightRequest();
+
+        updatedRequest.setFlightNumber("FL2001");
+        updatedRequest.setAirline("Air India");
+        updatedRequest.setSource("Mumbai");
+        updatedRequest.setDestination("Bangalore");
+        updatedRequest.setTotalSeats(120);
+        updatedRequest.setPrice(6000.0);
 
         when(flightRepository.findById(1L))
                 .thenReturn(Optional.of(flight));
@@ -180,7 +238,7 @@ class FlightServiceTest {
         Flight result =
                 flightService.updateFlight(
                         1L,
-                        updatedFlight
+                        updatedRequest
                 );
 
         assertEquals(
@@ -204,25 +262,19 @@ class FlightServiceTest {
         );
 
         assertEquals(
-                6000.0,
-                result.getPrice()
-        );
-
-        assertEquals(
                 120,
                 result.getTotalSeats()
         );
 
+        assertEquals(
+                6000.0,
+                result.getPrice()
+        );
+
         /*
-         * Originally:
-         * totalSeats = 100
-         * availableSeats = 90
-         *
-         * bookedSeats = 10
-         *
-         * New totalSeats = 120
-         *
-         * New availableSeats = 120 - 10 = 110
+         * 120 total seats
+         * 10 already booked
+         * 110 available
          */
         assertEquals(
                 110,
@@ -231,6 +283,68 @@ class FlightServiceTest {
 
         verify(flightRepository)
                 .save(flight);
+    }
+
+    @Test
+    void updateFlight_notFound() {
+
+        when(flightRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> flightService.updateFlight(
+                        99L,
+                        flightRequest
+                )
+        );
+
+        verify(flightRepository)
+                .findById(99L);
+
+        verify(
+                flightRepository,
+                never()
+        ).save(any(Flight.class));
+    }
+
+    @Test
+    void updateFlight_totalSeatsLessThanBookedSeats() {
+
+        /*
+         * Total seats = 100
+         * Available seats = 60
+         * Booked seats = 40
+         */
+
+        flight.setTotalSeats(100);
+        flight.setAvailableSeats(60);
+
+        FlightRequest updatedRequest =
+                new FlightRequest();
+
+        updatedRequest.setFlightNumber("FL2001");
+        updatedRequest.setAirline("Air India");
+        updatedRequest.setSource("Mumbai");
+        updatedRequest.setDestination("Delhi");
+        updatedRequest.setTotalSeats(30);
+        updatedRequest.setPrice(6000.0);
+
+        when(flightRepository.findById(1L))
+                .thenReturn(Optional.of(flight));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> flightService.updateFlight(
+                        1L,
+                        updatedRequest
+                )
+        );
+
+        verify(
+                flightRepository,
+                never()
+        ).save(any(Flight.class));
     }
 
     @Test
@@ -276,8 +390,10 @@ class FlightServiceTest {
         verify(flightRepository)
                 .findByIdForUpdate(1L);
 
-        verify(flightRepository, never())
-                .save(any(Flight.class));
+        verify(
+                flightRepository,
+                never()
+        ).save(any(Flight.class));
     }
 
     @Test
@@ -294,8 +410,10 @@ class FlightServiceTest {
         verify(flightRepository)
                 .findByIdForUpdate(99L);
 
-        verify(flightRepository, never())
-                .save(any(Flight.class));
+        verify(
+                flightRepository,
+                never()
+        ).save(any(Flight.class));
     }
 
     @Test
@@ -340,8 +458,10 @@ class FlightServiceTest {
         verify(flightRepository)
                 .findByIdForUpdate(99L);
 
-        verify(flightRepository, never())
-                .save(any(Flight.class));
+        verify(
+                flightRepository,
+                never()
+        ).save(any(Flight.class));
     }
 
     @Test
@@ -364,7 +484,9 @@ class FlightServiceTest {
         verify(flightRepository)
                 .findByIdForUpdate(1L);
 
-        verify(flightRepository, never())
-                .save(any(Flight.class));
+        verify(
+                flightRepository,
+                never()
+        ).save(any(Flight.class));
     }
 }

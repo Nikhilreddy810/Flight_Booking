@@ -6,17 +6,19 @@ import com.example.flight_booking_service.entity.Passenger;
 import com.example.flight_booking_service.exception.AccessDeniedException;
 import com.example.flight_booking_service.exception.NoSeatsAvailableException;
 import com.example.flight_booking_service.exception.ResourceNotFoundException;
+import com.example.flight_booking_service.kafka.BookingCreatedEvent;
+import com.example.flight_booking_service.kafka.BookingEventProducer;
 import com.example.flight_booking_service.repository.BookingRepository;
 import com.example.flight_booking_service.repository.PassengerRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 
 @Service
 public class BookingService {
@@ -29,6 +31,9 @@ public class BookingService {
 
     @Autowired
     private RestClient restClient;
+
+    @Autowired
+    private BookingEventProducer bookingEventProducer;
 
     public List<Booking> getAllBookings(
             String username,
@@ -45,32 +50,58 @@ public class BookingService {
             BookingRequest request,
             String username) {
 
-        Passenger passenger = passengerRepository
-                .findById(request.getPassengerId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Passenger not found with id: "
-                                        + request.getPassengerId()
+        Passenger passenger =
+                passengerRepository.findById(
+                                request.getPassengerId()
                         )
-                );
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Passenger not found with id: "
+                                                + request.getPassengerId()
+                                )
+                        );
 
-        reserveFlightSeat(request.getFlightId());
+        reserveFlightSeat(
+                request.getFlightId()
+        );
 
         Booking booking = new Booking();
 
-        booking.setFlightId(request.getFlightId());
+        booking.setFlightId(
+                request.getFlightId()
+        );
+
         booking.setPassenger(passenger);
-        booking.setBookingDate(LocalDate.now());
+
+        booking.setBookingDate(
+                LocalDate.now()
+        );
+
         booking.setCreatedBy(username);
 
         try {
 
-            return bookingRepository.save(booking);
+            Booking savedBooking =
+                    bookingRepository.save(booking);
+
+            BookingCreatedEvent event =
+                    new BookingCreatedEvent(
+                            savedBooking.getId(),
+                            savedBooking.getFlightId(),
+                            savedBooking.getCreatedBy()
+                    );
+
+            bookingEventProducer
+                    .sendBookingCreatedEvent(event);
+
+            return savedBooking;
 
         } catch (RuntimeException ex) {
 
             try {
-                releaseFlightSeat(request.getFlightId());
+                releaseFlightSeat(
+                        request.getFlightId()
+                );
             } catch (Exception ignored) {
             }
 
@@ -83,23 +114,27 @@ public class BookingService {
             String username,
             String role) {
 
-        Booking booking = bookingRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Booking not found with id: " + id
-                        )
-                );
+        Booking booking =
+                bookingRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Booking not found with id: "
+                                                + id
+                                )
+                        );
 
         if (!"ROLE_ADMIN".equals(role)
-                && !username.equals(booking.getCreatedBy())) {
+                && !username.equals(
+                        booking.getCreatedBy())) {
 
             throw new AccessDeniedException(
                     "You are not allowed to cancel this booking"
             );
         }
 
-        releaseFlightSeat(booking.getFlightId());
+        releaseFlightSeat(
+                booking.getFlightId()
+        );
 
         bookingRepository.delete(booking);
     }
@@ -118,14 +153,20 @@ public class BookingService {
 
         } catch (HttpClientErrorException.BadRequest ex) {
 
+            /*
+             * Flight currently uses 400 when no seats
+             * are available.
+             */
             throw new NoSeatsAvailableException(
-                    "No seats available for this flight"
+                    "No seats available for flight: "
+                            + flightId
             );
 
         } catch (HttpClientErrorException.NotFound ex) {
 
             throw new ResourceNotFoundException(
-                    "Flight not found with id: " + flightId
+                    "Flight not found with id: "
+                            + flightId
             );
         }
     }
@@ -145,7 +186,8 @@ public class BookingService {
         } catch (HttpClientErrorException.NotFound ex) {
 
             throw new ResourceNotFoundException(
-                    "Flight not found with id: " + flightId
+                    "Flight not found with id: "
+                            + flightId
             );
         }
     }
