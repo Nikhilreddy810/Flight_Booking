@@ -2,6 +2,7 @@ package com.example.flight_notification_service.config;
 
 import com.example.flight_notification_service.kafka.BookingCreatedEvent;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -14,6 +15,9 @@ import java.util.Map;
 
 @Configuration
 public class KafkaConsumerConfig {
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
     @Bean
     public ConsumerFactory<String, BookingCreatedEvent> consumerFactory() {
@@ -31,7 +35,7 @@ public class KafkaConsumerConfig {
 
         properties.put(
                 org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "172.22.101.164:9092"
+                bootstrapServers
         );
 
         properties.put(
