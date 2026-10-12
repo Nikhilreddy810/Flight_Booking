@@ -6,6 +6,9 @@
 [![Redis](https://img.shields.io/badge/Redis-Cache-red.svg?style=for-the-badge&logo=redis)](https://redis.io/)
 [![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-4.2-231F20.svg?style=for-the-badge&logo=apachekafka)](https://kafka.apache.org/)
 [![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-009639.svg?style=for-the-badge&logo=nginx)](https://nginx.org/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C.svg?style=for-the-badge&logo=prometheus)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800.svg?style=for-the-badge&logo=grafana)](https://grafana.com/)
+[![AWS CloudWatch](https://img.shields.io/badge/AWS-CloudWatch-FF9900.svg?style=for-the-badge&logo=amazonaws)](https://aws.amazon.com/cloudwatch/)
 [![Docker Compose](https://img.shields.io/badge/Docker_Compose-Multi--Container-2496ED.svg?style=for-the-badge&logo=docker)](https://www.docker.com/)
 [![CI/CD](https://img.shields.io/badge/GitHub_Actions-CI-blue?style=for-the-badge&logo=githubactions)](https://github.com/Nikhilreddy810/Flight_Booking/actions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
@@ -211,6 +214,54 @@ The complete platform orchestrates **10 containers** in a unified bridge network
 
 ---
 
+## 📊 Observability & Metrics Infrastructure
+
+The platform integrates deep system observability combining host-level metrics, JVM telemetry, application runtime metrics, and live dashboards:
+
+```text
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                           OBSERVABILITY PIPELINE                            │
+ └─────────────────────────────────────────────────────────────────────────────┘
+                                       │
+        ┌──────────────────────────────┴──────────────────────────────┐
+        ▼                                                             ▼
+┌───────────────────────────┐                         ┌───────────────────────────┐
+│     AWS CLOUDWATCH        │                         │  SPRING BOOT ACTUATOR     │
+│ • EC2 Host CPU / Memory   │                         │  • /actuator/prometheus   │
+│ • Disk I/O & Network      │                         │  • Micrometer instrumentation
+└───────────────────────────┘                         └─────────────┬─────────────┘
+                                                                    │
+                                                      Scraped Every 15s (UP Target)
+                                                                    ▼
+                                                      ┌───────────────────────────┐
+                                                      │    PROMETHEUS (Docker)    │
+                                                      │  • PromQL metric engine   │
+                                                      │  • Scrapes port 8080/8082 │
+                                                      └─────────────┬─────────────┘
+                                                                    │
+                                                            SSH Tunnel / Direct
+                                                                    ▼
+                                                      ┌───────────────────────────┐
+                                                      │     GRAFANA DASHBOARD     │
+                                                      │ • JVM Heap & Garbage Coll │
+                                                      │ • Process & System CPU    │
+                                                      │ • HTTP Request Durations  │
+                                                      │ • Product / API Telemetry │
+                                                      └───────────────────────────┘
+```
+
+### Key Observability Implementations:
+1. **Spring Boot Actuator & Micrometer Integration:** Exposed real-time runtime metrics via the `/actuator/prometheus` endpoint, collecting JVM memory pools, thread counts, CPU usage, and HTTP request throughput/latencies.
+2. **Prometheus Scraping:** Configured custom Prometheus scrape jobs running on a 15-second interval; verified target status in the Prometheus UI (`State: UP`).
+3. **Grafana Dashboards:** Designed comprehensive interactive monitoring dashboards featuring:
+   - **JVM Memory Utilization:** Heap allocated, used, and committed alongside GC pause times.
+   - **System & Application CPU:** Correlating Spring Boot process CPU consumption against total host capacity.
+   - **HTTP Request Metrics:** Request rate (`http_server_requests_seconds_count`), error rates (4xx/5xx status codes), and p95/p99 latency quantiles.
+4. **SSH Tunneling for Secure Monitoring:** Connected local Grafana instances to remote Prometheus scraper targets over an encrypted SSH tunnel, keeping EC2 resource footprints minimal and preventing unnecessary cloud memory pressure.
+5. **AWS CloudWatch Verification:** Monitored baseline EC2 CPU, network in/out, and disk activity to correlate infrastructure load against application-level throughput.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -291,9 +342,10 @@ Git Push ──► GitHub Actions Runner ──► Set up Java 21 ──► Buil
 - [x] **Multi-Stage Docker Builds:** Production-grade `Dockerfile` for each microservice.
 - [x] **Full-Stack Orchestration:** 10-container `docker-compose.yml` defining services, databases, Redis, Kafka, and Nginx.
 - [x] **CI/CD Automation:** GitHub Actions CI workflow building all services on push.
+- [x] **Observability & Application Metrics:** Integrated Spring Boot Actuator, Micrometer, Prometheus scraping (15s interval), AWS CloudWatch EC2 host monitoring, and interactive Grafana dashboards (JVM heap/GC, CPU, HTTP throughput).
 - [ ] **Nginx Reverse Proxy Route Hardening:** Resolve trailing slash redirect anomalies (HTTP 301) and standardize upstream proxy pass paths for Auth Service.
 - [ ] **End-to-End API Gateway Integration:** Transition Nginx routing or implement Spring Cloud Gateway with centralized rate limiting and unified JWT parsing filter.
-- [ ] **Distributed Tracing & Metrics:** Integrate OpenTelemetry, Prometheus, and Grafana for distributed transaction visibility across HTTP and Kafka hops.
+- [ ] **Distributed Tracing:** Integrate OpenTelemetry & Zipkin/Jaeger for cross-service transaction observability.
 - [ ] **AWS Cloud Deployment:** Terraform infrastructure-as-code for ECS / EC2 deployment.
 
 ---
