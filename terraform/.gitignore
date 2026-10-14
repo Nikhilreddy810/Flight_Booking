@@ -1,0 +1,32 @@
+.terraform/
+mkdir -p terraform
+
+# Capture your current public IP for restricted SSH access
+MY_IP=$(curl -4 -fsS --max-time 10 https://checkip.amazonaws.com | tr -d '\r\n')
+
+if [ -z "$MY_IP" ]; then
+  echo "Could not determine your public IP. Stop here."
+  exit 1
+fi
+
+cat > terraform/versions.tf <<'EOF'
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+# Terraform state and generated files
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfplan
