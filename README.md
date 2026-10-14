@@ -9,6 +9,7 @@
 [![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C.svg?style=for-the-badge&logo=prometheus)](https://prometheus.io/)
 [![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800.svg?style=for-the-badge&logo=grafana)](https://grafana.com/)
 [![AWS CloudWatch](https://img.shields.io/badge/AWS-CloudWatch-FF9900.svg?style=for-the-badge&logo=amazonaws)](https://aws.amazon.com/cloudwatch/)
+[![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC.svg?style=for-the-badge&logo=terraform)](https://www.terraform.io/)
 [![Docker Compose](https://img.shields.io/badge/Docker_Compose-Multi--Container-2496ED.svg?style=for-the-badge&logo=docker)](https://www.docker.com/)
 [![CI/CD](https://img.shields.io/badge/GitHub_Actions-CI-blue?style=for-the-badge&logo=githubactions)](https://github.com/Nikhilreddy810/Flight_Booking/actions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
@@ -262,6 +263,51 @@ The platform integrates deep system observability combining host-level metrics, 
 
 ---
 
+## 🏗️ Infrastructure as Code (Terraform)
+
+The cloud infrastructure for the Flight Booking System is defined as code under `terraform/` to ensure deterministic, reproducible, and automated AWS environment provisioning in `ap-south-1` (Mumbai).
+
+```text
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                     TERRAFORM AWS PROVISIONING (ap-south-1)                 │
+ └─────────────────────────────────────────────────────────────────────────────┘
+                                       │
+                                terraform apply
+                                       ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │ VPC: fbs-vpc (10.0.0.0/16)                                                  │
+ │                                                                             │
+ │   ┌──────────────────────────┐         ┌────────────────────────────────┐  │
+ │   │ Public Subnet:           │         │ Internet Gateway: fbs-igw      │  │
+ │   │ fbs-public-subnet        │◄───────►│ Route Table: fbs-public-rt     │  │
+ │   │ (10.0.1.0/24)            │         └────────────────────────────────┘  │
+ │   └─────────────┬────────────┘                                              │
+ │                 │                                                           │
+ │                 ▼                                                           │
+ │   ┌──────────────────────────┐                                              │
+ │   │ Security Group:          │                                              │
+ │   │ fbs-app-sg               │                                              │
+ │   │ • Ingress 80  (Public)   │                                              │
+ │   │ • Ingress 22  (Admin IP) │                                              │
+ │   │ • Egress  All (0.0.0.0/0)│                                              │
+ │   └─────────────┬────────────┘                                              │
+ │                 │                                                           │
+ │                 ▼                                                           │
+ │   ┌──────────────────────────────────────────────────────────────────────┐  │
+ │   │ EC2 Instance: fbs-server (t3.micro, Amazon Linux 2023)               │  │
+ │   │ • Storage: 8 GB gp3 encrypted EBS root volume                        │  │
+ │   │ • User Data: automated Docker engine & Git package bootstrapping     │  │
+ │   └──────────────────────────────────────────────────────────────────────┘  │
+ └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Deployed AWS Resources:
+* **Networking:** Custom VPC (`fbs-vpc`), Public Subnet (`fbs-public-subnet`), Internet Gateway (`fbs-igw`), Route Table (`fbs-public-rt`), and route table association.
+* **Security & Compute:** Dedicated Security Group (`fbs-app-sg` restricting SSH to administrator CIDR while exposing HTTP 80) and an EC2 instance (`fbs-server`, `t3.micro`) with automated Docker bootstrapping via `user_data`.
+* **State & Configuration:** Parameterized via `variables.tf`, resource IDs exposed in `outputs.tf`, provider version pinned via `.terraform.lock.hcl`, and remote state protection configured in `.gitignore`.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -343,10 +389,11 @@ Git Push ──► GitHub Actions Runner ──► Set up Java 21 ──► Buil
 - [x] **Full-Stack Orchestration:** 10-container `docker-compose.yml` defining services, databases, Redis, Kafka, and Nginx.
 - [x] **CI/CD Automation:** GitHub Actions CI workflow building all services on push.
 - [x] **Observability & Application Metrics:** Integrated Spring Boot Actuator, Micrometer, Prometheus scraping (15s interval), AWS CloudWatch EC2 host monitoring, and interactive Grafana dashboards (JVM heap/GC, CPU, HTTP throughput).
+- [x] **Infrastructure as Code (IaC):** Automated AWS infrastructure provisioning with Terraform (VPC, public subnet, Internet Gateway, route table, security group, and encrypted gp3 EC2 instance with user data bootstrapping).
 - [ ] **Nginx Reverse Proxy Route Hardening:** Resolve trailing slash redirect anomalies (HTTP 301) and standardize upstream proxy pass paths for Auth Service.
 - [ ] **End-to-End API Gateway Integration:** Transition Nginx routing or implement Spring Cloud Gateway with centralized rate limiting and unified JWT parsing filter.
 - [ ] **Distributed Tracing:** Integrate OpenTelemetry & Zipkin/Jaeger for cross-service transaction observability.
-- [ ] **AWS Cloud Deployment:** Terraform infrastructure-as-code for ECS / EC2 deployment.
+- [ ] **Production ECS Orchestration:** Container deployment and scaling via AWS ECS / Fargate.
 
 ---
 
